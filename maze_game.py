@@ -10,6 +10,8 @@ window = tkinter.Tk()
 window.title("Maze Game")
 window.geometry("700x500+50+50")
 window.resizable(True, True)
+canvas = Canvas(window, width=700, height=500, bg="#FFF8E5")
+canvas.pack()
 
 
 class Cell:
@@ -116,12 +118,10 @@ def draw_maze(maze_cell_table: list) -> list:
 def search_path(start: tuple, end: tuple, maze: list) -> list:
     location_point = [(1, 0), (-1, 0), (0, 1), (0, -1)]
     prev_location = [[None] * len(maze[0]) for i in range(len(maze))]
-
     queue = deque([start])
 
     while queue:
         x, y = queue.popleft()
-
         if (x, y) == end:
             path = []
             while (x, y) != start:
@@ -138,27 +138,39 @@ def search_path(start: tuple, end: tuple, maze: list) -> list:
 
             prev_location[nx][ny] = (x, y)
             queue.append((nx, ny))
-    
     return []
-
 
 
 def play_computer():
     return
 
 
+# 유저 플레이 및 캐릭터 이동 함수
 def play_user(event):
     global player
-    if event.keysym == "Up":
-        canvas.move(player, 0, -10)
-    elif event.keysym == "Down":
-        canvas.move(player, 0, 10)
-    elif event.keysym == "Left":
-        canvas.move(player, -10, 0)
-    elif event.keysym == "Right":
-        canvas.move(player, 10, 0)
-    return
+    global start
+    directions = {'Left': (0, -1), 'Right': (0, 1), 'Up': (-1, 0), 'Down': (1, 0)}
+    direction = directions.get(event.keysym)
+    if direction is None:
+        return
+    
+    start = list(start)
+    nx, ny = start[0] + direction[0], start[1] + direction[1]
+    print(nx, ny)
+    if not (1 <= nx < len(maze_table) and 1 <= ny < len(maze_table[0])) or maze_table[nx][ny] == '1':
+        return
+    
+    canvas.move(player, direction[1]*wall_size, direction[0]*wall_size)
+    start[0], start[1] = nx, ny
+    start = tuple(start)
 
+    if start == end:
+        img = tkinter.PhotoImage(file='Maze_Game_BackTracking\img\goal_popup.png')
+        label = Label(window, image=img)
+        label.image = img
+        label.place(x=100, y=120)
+        
+    
 
 def select_stage():
     return
@@ -173,12 +185,7 @@ def set_game_menu():
 
 
 
-canvas = Canvas(window, width=700, height=500, bg="#FFF8E5")
-canvas.pack()
-
-
-
-maze_size = 10  # 나중에 GUI 상에서 입력 받도록 수정
+maze_size = 5  # 나중에 GUI 상에서 입력 받도록 수정
 maze_cell_table = [[Cell(x, y) for x in range(maze_size)] for y in range(maze_size)]
 current_cell = maze_cell_table[0][0]
 stack = []
@@ -194,8 +201,6 @@ maze_table_length = len(maze_table)
 start = (1, 1)
 end = (maze_table_length-2, maze_table_length-2)
 maze_path = search_path(start, end, maze_table)
-
-print(maze_path)
 
 for x, y in maze_path:
     maze_table[x][y] = '*'
@@ -213,7 +218,4 @@ img = tkinter.PhotoImage(file='Maze_Game_BackTracking\img\character.png').subsam
 player = canvas.create_image(wall_size*1.5, wall_size*1.5, image=img)
 
 canvas.bind_all("<KeyPress>", play_user)
-
-
-
 window.mainloop()
