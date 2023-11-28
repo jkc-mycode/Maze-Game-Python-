@@ -4,6 +4,7 @@ import tkinter
 from tkinter import *
 import os
 from collections import deque
+import math
 
 window = tkinter.Tk()
 window.title("Maze Game")
@@ -154,11 +155,11 @@ class MazeGame:
         for x, y in maze_path:
             if self.is_goal: 
                 return
-            current[0] = y - current[0]
-            current[1] = x - current[1]
-            self.canvas.move(player, current[0]*self.wall_size, current[1]*self.wall_size)
-            current[0] = y
-            current[1] = x
+            current[1] = y - current[1]
+            current[0] = x - current[0]
+            self.canvas.move(player, current[1]*self.wall_size, current[0]*self.wall_size)
+            current[1] = y
+            current[0] = x
             time.sleep(0.1)
             self.canvas.update()
 
@@ -184,7 +185,7 @@ class MazeGame:
         self.canvas.move(self.player, direction[1]*self.wall_size, direction[0]*self.wall_size)
         self.start[0], self.start[1] = nx, ny
         self.start = tuple(self.start)
-
+        
         if self.start == self.end:
             self.is_goal = True
             img = tkinter.PhotoImage(file='Maze_Game_BackTracking\img\goal_popup.png')
@@ -235,15 +236,30 @@ class MazeGame:
         window.config(menu=menubar)
 
 
+    def get_valid_exit_position(self, x: int, y: int) -> bool:
+        return self.maze_table[x][y] == '0' 
+
+
+    def get_distance(self, start: tuple, end: tuple) -> int:
+        return math.sqrt((start[0] - end[0]) ** 2 + (start[1] - end[1]) ** 2)
+
+    
+    def select_random_end_location(self):
+        while True:
+            self.end = (random.randint(1, len(self.maze_table) - 2), random.randint(1, len(self.maze_table[0]) - 2))
+            if self.get_valid_exit_position(*self.end) and self.get_distance(self.start, self.end) > len(self.maze_table) / 1.5:
+                break
+
+
     def main(self):
         while self.make_maze():
             continue
 
         self.maze_table = self.draw_maze(self.maze_cell_table)
         self.start = (1, 1)
-        self.end = (len(self.maze_table) - 2, len(self.maze_table) - 2)
+        self.select_random_end_location()
         self.maze_path = self.search_path(self.start, self.end, self.maze_table)
-
+        
         self.canvas = Canvas(window, width=800, height=660, bg="#FFF8E5")
         self.canvas.pack()
         self.make_game_menu()
@@ -254,10 +270,14 @@ class MazeGame:
                     self.canvas.create_rectangle(x_index*self.wall_size, y_index*self.wall_size,
                                                  x_index*self.wall_size+self.wall_size, y_index*self.wall_size+self.wall_size, fill='#C6D57E', outline='white')
 
-        self.goal = self.canvas.create_rectangle(self.end[1]*self.wall_size, self.end[0]*self.wall_size,
+        self.goal_bg = self.canvas.create_rectangle(self.end[1]*self.wall_size, self.end[0]*self.wall_size,
                                                  self.end[1]*self.wall_size+self.wall_size, self.end[0]*self.wall_size+self.wall_size, fill='#FFAB40', outline='#FFAB40')
-        self.player = self.canvas.create_rectangle(self.start[1]*self.wall_size, self.start[0]*self.wall_size,
-                                                   self.start[1]*self.wall_size+self.wall_size, self.start[0]*self.wall_size+self.wall_size, fill='#FF4081', outline='#FF4081')
+        goal_img = tkinter.PhotoImage(file='Maze_Game_BackTracking\img\goal.png').subsample(self.maze_size*2)
+        self.goal = self.canvas.create_image(self.end[1]*self.wall_size+self.wall_size/2, self.end[0]*self.wall_size+self.wall_size/2, image=goal_img)
+        
+        player_img = tkinter.PhotoImage(file='Maze_Game_BackTracking\img\character.png').subsample(self.maze_size*2)
+        self.player = self.canvas.create_image(self.start[1]*self.wall_size+self.wall_size/2, self.start[0]*self.wall_size+self.wall_size/2, image=player_img)
+
         window.mainloop()
 
 
