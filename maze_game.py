@@ -8,7 +8,7 @@ import math
 
 window = tkinter.Tk()
 window.title("Maze Game")
-window.geometry("800x660+50+50")
+window.geometry("660x660+100+100")
 window.resizable(False, False)
 
 class Cell:
@@ -270,7 +270,7 @@ class MazeGame:
                     self.canvas.create_rectangle(x_index*self.wall_size, y_index*self.wall_size,
                                                  x_index*self.wall_size+self.wall_size, y_index*self.wall_size+self.wall_size, fill='#C6D57E', outline='white')
 
-        self.goal_bg = self.canvas.create_rectangle(self.end[1]*self.wall_size, self.end[0]*self.wall_size,
+        self.goal_bg = self.canvas.create_oval(self.end[1]*self.wall_size, self.end[0]*self.wall_size,
                                                  self.end[1]*self.wall_size+self.wall_size, self.end[0]*self.wall_size+self.wall_size, fill='#FFAB40', outline='#FFAB40')
         goal_img = tkinter.PhotoImage(file='Maze_Game_BackTracking\img\goal.png').subsample(self.maze_size*2)
         self.goal = self.canvas.create_image(self.end[1]*self.wall_size+self.wall_size/2, self.end[0]*self.wall_size+self.wall_size/2, image=goal_img)
@@ -279,6 +279,7 @@ class MazeGame:
         self.player = self.canvas.create_image(self.start[1]*self.wall_size+self.wall_size/2, self.start[0]*self.wall_size+self.wall_size/2, image=player_img)
 
         window.mainloop()
+
 
 
 game = MazeGame()
