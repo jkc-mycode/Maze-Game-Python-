@@ -49,6 +49,9 @@ class MazeGame:
         self.player = 0
         self.is_goal = False
         self.canvas = None
+        self.player_mode = False
+        self.item_location = []
+        self.item_img = 0
 
 
     def make_maze(self):
@@ -124,6 +127,7 @@ class MazeGame:
         return temp_table
 
 
+    # BFS 알고리즘 사용(Queue)
     def search_path(self, start: tuple, end: tuple, maze: list) -> list:
         location_point = [(1, 0), (-1, 0), (0, 1), (0, -1)]
         prev_location = [[None] * len(maze[0]) for _ in range(len(maze))]
@@ -185,6 +189,7 @@ class MazeGame:
         self.canvas.move(self.player, direction[1]*self.wall_size, direction[0]*self.wall_size)
         self.start[0], self.start[1] = nx, ny
         self.start = tuple(self.start)
+        self.check_item()
         
         if self.start == self.end:
             self.is_goal = True
@@ -194,11 +199,42 @@ class MazeGame:
             label.place(x=60, y=60)
 
 
+    def check_item(self):
+        if self.start in self.item_location:
+            print("아이템 획득!!")
+            index = self.item_location.index(self.start)
+            self.canvas.create_oval(self.item_location[index][1]*self.wall_size, self.item_location[index][0]*self.wall_size,
+                                                 self.item_location[index][1]*self.wall_size+self.wall_size, self.item_location[index][0]*self.wall_size+self.wall_size, fill='#FFF8E5', outline='#FFF8E5', tags=("empty_item",))
+            self.canvas.tag_raise("player")
+            start_temp = [(self.start[0], self.start[1]-1), (self.start[0], self.start[1]+1), (self.start[0]-1, self.start[1]), (self.start[0]+1, self.start[1])]  # 좌우상하
+            for x, y in start_temp:
+                if (1 <= x < len(self.maze_table)-1 and 1 <= y < len(self.maze_table[0])-1):
+                    print(len(self.maze_table), x, y)
+                    self.maze_table[x][y] = 0
+                    self.canvas.create_rectangle(y*self.wall_size, x*self.wall_size, y*self.wall_size+self.wall_size, x*self.wall_size+self.wall_size, fill='#FFF8E5', outline='#FFF8E5')
+                    self.canvas.tag_raise("player")
+
+
+    def select_random_item_location(self):
+        while True:
+            item_location_temp = (random.randint(1, len(self.maze_table) - 2), random.randint(1, len(self.maze_table[0]) - 2))
+            if self.get_valid_position(*item_location_temp) and item_location_temp != self.start and item_location_temp != self.end:
+                self.item_location.append(item_location_temp)
+                break
+
+
     def select_mode(self, mode: int):
         if mode == 1:
             self.play_computer(self.player, self.start, self.maze_path)
         else:
             self.canvas.bind_all("<KeyPress>", self.play_user)
+            self.player_mode = True
+            for i in range(int(self.maze_size / 2)):
+                self.select_random_item_location()
+            
+            self.item_img = tkinter.PhotoImage(file='Maze_Game_BackTracking\img\item.png').subsample(self.maze_size)
+            for i in range(int(self.maze_size / 2)):
+                self.canvas.create_image(self.item_location[i][1]*self.wall_size+self.wall_size/2, self.item_location[i][0]*self.wall_size+self.wall_size/2, image=self.item_img)
 
 
     def select_stage(self, size: int):
@@ -213,7 +249,7 @@ class MazeGame:
 
 
     def exit(self):
-        window.quit()
+        window.destroy()
        
 
     def make_game_menu(self):
@@ -236,7 +272,7 @@ class MazeGame:
         window.config(menu=menubar)
 
 
-    def get_valid_exit_position(self, x: int, y: int) -> bool:
+    def get_valid_position(self, x: int, y: int) -> bool:
         return self.maze_table[x][y] == '0' 
 
 
@@ -247,7 +283,7 @@ class MazeGame:
     def select_random_end_location(self):
         while True:
             self.end = (random.randint(1, len(self.maze_table) - 2), random.randint(1, len(self.maze_table[0]) - 2))
-            if self.get_valid_exit_position(*self.end) and self.get_distance(self.start, self.end) > len(self.maze_table) / 1.5:
+            if self.get_valid_position(*self.end) and self.get_distance(self.start, self.end) > len(self.maze_table) / 1.2:
                 break
 
 
@@ -276,7 +312,7 @@ class MazeGame:
         self.goal = self.canvas.create_image(self.end[1]*self.wall_size+self.wall_size/2, self.end[0]*self.wall_size+self.wall_size/2, image=goal_img)
         
         player_img = tkinter.PhotoImage(file='Maze_Game_BackTracking\img\character.png').subsample(self.maze_size*2)
-        self.player = self.canvas.create_image(self.start[1]*self.wall_size+self.wall_size/2, self.start[0]*self.wall_size+self.wall_size/2, image=player_img)
+        self.player = self.canvas.create_image(self.start[1]*self.wall_size+self.wall_size/2, self.start[0]*self.wall_size+self.wall_size/2, image=player_img, tags=("player",))
 
         window.mainloop()
 
